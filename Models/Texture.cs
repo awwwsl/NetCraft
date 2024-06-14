@@ -13,7 +13,7 @@ public class Texture
     public readonly int Handle;
     private static readonly Dictionary<string, Texture> _cache = new();
 
-    public static Texture? LoadDiffuseFromId(string id)
+    public static Texture LoadDiffuseFromId(string id)
     {
         var path = $"Resources/{id}.png";
 
@@ -24,14 +24,14 @@ public class Texture
         return LoadFromFile(path);
     }
 
-    public static Texture? LoadSpecularFromId(string id) => LoadDiffuseFromId(id + "_specular");
+    public static Texture LoadSpecularFromId(string id) => LoadDiffuseFromId(id + "_specular");
 
-    public static Texture? LoadFromFile(string path)
+    public static Texture LoadFromFile(string path)
     {
         if (_cache.ContainsKey(path))
             return _cache[path];
         if (!File.Exists(path))
-            return null;
+            return NullTexture.Instance;
 
         // Generate handle
         int handle = GL.GenTexture();

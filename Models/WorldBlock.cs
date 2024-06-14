@@ -21,8 +21,8 @@ public class WorldBlock
 
     private static List<string> _blockMap = new() { "blockLamp" };
 
-    public Texture? DiffuseMap { get; init; }
-    public Texture? SpecularMap { get; init; }
+    public Texture DiffuseMap { get; init; }
+    public Texture SpecularMap { get; init; }
 
     public required Vector3i Location { get; init; }
     public Vector2i ChunkLocation => (Location.X % Chunk.SizeX, Location.Z % Chunk.SizeZ);

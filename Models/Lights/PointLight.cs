@@ -15,7 +15,7 @@ public struct PointLight
     public required Vector3 Diffuse { get; init; }
     public required Vector3 Specular { get; init; }
 
-    public PointLightAligned GetAligned()
+    public PointLightRenderable GetAligned()
     {
         return new()
         {
@@ -43,7 +43,7 @@ public struct PointLight
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct PointLightAligned
+public struct PointLightRenderable
 {
     public required float PositionX { get; init; }
     public required float PositionY { get; init; }
