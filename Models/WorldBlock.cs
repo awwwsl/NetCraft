@@ -1,4 +1,5 @@
 using NetCraft.Models.Enums;
+using NetCraft.Models.Lights;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
@@ -28,6 +29,8 @@ public class WorldBlock
     public Vector3i LocalLocation => (Location.X - ChunkLocation.X * Chunk.SizeX, Location.Y, Location.Z - ChunkLocation.Y * Chunk.SizeZ);
 
     public Shader Shader { get; init; }
+
+    public PointLight? PointLight { get; init; }
 
     public BlockFaceCulling FaceCulling { get; set; } = (BlockFaceCulling)0b111111;
 

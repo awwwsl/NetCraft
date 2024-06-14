@@ -66,9 +66,9 @@ public class Chunk
             var block = Blocks[x, y, z];
             if (block is null)
                 continue;
-            if (block is IPointLight plight)
+            if (block.PointLight is not null)
             {
-                lights.Add(plight.PointLight);
+                lights.Add(block.PointLight.Value);
                 Console.WriteLine($"Added light {block.Location}");
             }
             if (!loadedShader.Contains(block.Shader))
@@ -168,8 +168,8 @@ public class Chunk
                     shader.SetFloat("material.shininess", 32.0f);
                 }
             }
-            if (block is IPointLight pLight)
-                shader.SetVector3("fragColor", pLight.PointLight.Diffuse);
+            if (block.PointLight != null)
+                shader.SetVector3("fragColor", block.PointLight.Value.Diffuse);
             block.Shader.SetMatrix4("model", Matrix4.Identity * Matrix4.CreateTranslation(block.Location));
 
             if (block.FaceCulling.HasFlag(BlockFaceCulling.Top))

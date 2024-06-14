@@ -42,7 +42,7 @@ public class Window : GameWindow
 
         _chunk = new((0, 0));
 
-        _chunk.Blocks[5, 2, 5] = new BlockPointLight("blockLamp")
+        _chunk.Blocks[5, 2, 5] = new WorldBlock("blockLamp")
         {
             Location = (5, 2, 5),
             PointLight = new()
@@ -57,7 +57,7 @@ public class Window : GameWindow
             }
         };
 
-        _chunk.Blocks[9, 2, 5] = new BlockPointLight("blockLamp")
+        _chunk.Blocks[9, 2, 5] = new WorldBlock("blockLamp")
         {
             Location = (9, 2, 5),
             PointLight = new()
@@ -72,7 +72,7 @@ public class Window : GameWindow
             }
         };
 
-        _chunk.Blocks[9, 2, 9] = new BlockPointLight("blockLamp")
+        _chunk.Blocks[9, 2, 9] = new WorldBlock("blockLamp")
         {
             Location = (9, 2, 9),
             PointLight = new()
