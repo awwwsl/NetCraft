@@ -175,17 +175,17 @@ public class Window : GameWindow
 
             shader.SetMatrix4("model", Matrix4.Identity * Matrix4.CreateTranslation(block.Location));
 
-            if (block.FaceCulling.HasFlag(BlockFaceCulling.Top))
+            if (block.FaceVisible.HasFlag(BlockFaceVisible.Top))
                 GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
-            if (block.FaceCulling.HasFlag(BlockFaceCulling.Bottom))
+            if (block.FaceVisible.HasFlag(BlockFaceVisible.Bottom))
                 GL.DrawArrays(PrimitiveType.Triangles, 6, 6);
-            if (block.FaceCulling.HasFlag(BlockFaceCulling.XyFront))
+            if (block.FaceVisible.HasFlag(BlockFaceVisible.XyFront))
                 GL.DrawArrays(PrimitiveType.Triangles, 12, 6);
-            if (block.FaceCulling.HasFlag(BlockFaceCulling.XyBack))
+            if (block.FaceVisible.HasFlag(BlockFaceVisible.XyBack))
                 GL.DrawArrays(PrimitiveType.Triangles, 18, 6);
-            if (block.FaceCulling.HasFlag(BlockFaceCulling.ZyFront))
+            if (block.FaceVisible.HasFlag(BlockFaceVisible.ZyFront))
                 GL.DrawArrays(PrimitiveType.Triangles, 24, 6);
-            if (block.FaceCulling.HasFlag(BlockFaceCulling.ZyBack))
+            if (block.FaceVisible.HasFlag(BlockFaceVisible.ZyBack))
                 GL.DrawArrays(PrimitiveType.Triangles, 30, 6);
         }
     }

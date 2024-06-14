@@ -32,21 +32,21 @@ public class WorldBlock
 
     public PointLight? PointLight { get; init; }
 
-    public BlockFaceCulling FaceCulling { get; set; } = (BlockFaceCulling)0b111111;
+    public BlockFaceVisible FaceVisible { get; set; } = (BlockFaceVisible)0b111111;
 
     public List<float> GetVertices(List<float> collection)
     {
-        if (FaceCulling.HasFlag(BlockFaceCulling.Top))
+        if (FaceVisible.HasFlag(BlockFaceVisible.Top))
             collection.AddRange(LocalBlock.Vertices.Take(new Range(0, 6)));
-        if (FaceCulling.HasFlag(BlockFaceCulling.Bottom))
+        if (FaceVisible.HasFlag(BlockFaceVisible.Bottom))
             collection.AddRange(LocalBlock.Vertices.Take(new Range(6, 12)));
-        if (FaceCulling.HasFlag(BlockFaceCulling.XyFront))
+        if (FaceVisible.HasFlag(BlockFaceVisible.XyFront))
             collection.AddRange(LocalBlock.Vertices.Take(new Range(12, 18)));
-        if (FaceCulling.HasFlag(BlockFaceCulling.XyBack))
+        if (FaceVisible.HasFlag(BlockFaceVisible.XyBack))
             collection.AddRange(LocalBlock.Vertices.Take(new Range(18, 24)));
-        if (FaceCulling.HasFlag(BlockFaceCulling.ZyFront))
+        if (FaceVisible.HasFlag(BlockFaceVisible.ZyFront))
             collection.AddRange(LocalBlock.Vertices.Take(new Range(24, 30)));
-        if (FaceCulling.HasFlag(BlockFaceCulling.ZyBack))
+        if (FaceVisible.HasFlag(BlockFaceVisible.ZyBack))
             collection.AddRange(LocalBlock.Vertices.Take(new Range(30, 36)));
         return collection;
     }
@@ -57,17 +57,17 @@ public class WorldBlock
     {
         System.Text.StringBuilder builder = new();
 
-        if (FaceCulling.HasFlag(BlockFaceCulling.Top))
+        if (FaceVisible.HasFlag(BlockFaceVisible.Top))
             builder.Append("Top ");
-        if (FaceCulling.HasFlag(BlockFaceCulling.Bottom))
+        if (FaceVisible.HasFlag(BlockFaceVisible.Bottom))
             builder.Append("Bottom ");
-        if (FaceCulling.HasFlag(BlockFaceCulling.XyFront))
+        if (FaceVisible.HasFlag(BlockFaceVisible.XyFront))
             builder.Append("XyFront ");
-        if (FaceCulling.HasFlag(BlockFaceCulling.XyBack))
+        if (FaceVisible.HasFlag(BlockFaceVisible.XyBack))
             builder.Append("XyBack ");
-        if (FaceCulling.HasFlag(BlockFaceCulling.ZyFront))
+        if (FaceVisible.HasFlag(BlockFaceVisible.ZyFront))
             builder.Append("ZyFront ");
-        if (FaceCulling.HasFlag(BlockFaceCulling.ZyBack))
+        if (FaceVisible.HasFlag(BlockFaceVisible.ZyBack))
             builder.Append("ZyBack ");
         return builder.ToString().TrimEnd();
     }

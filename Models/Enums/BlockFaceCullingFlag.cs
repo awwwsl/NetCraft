@@ -1,7 +1,7 @@
 namespace NetCraft.Models.Enums;
 
 [Flags]
-public enum BlockFaceCulling
+public enum BlockFaceVisible
 {
     Top = 1 << 0,
     Bottom = 1 << 1,

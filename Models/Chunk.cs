@@ -79,17 +79,17 @@ public class Chunk
             if (block is null)
                 continue;
             if (y < SizeY - 1 && Blocks[x, y + 1, z] is not null)
-                block.FaceCulling &= ~BlockFaceCulling.Top;
+                block.FaceVisible &= ~BlockFaceVisible.Top;
             if (y > 0 && Blocks[x, y - 1, z] is not null)
-                block.FaceCulling &= ~BlockFaceCulling.Bottom;
+                block.FaceVisible &= ~BlockFaceVisible.Bottom;
             if (x < SizeX - 1 && Blocks[x + 1, y, z] is not null)
-                block.FaceCulling &= ~BlockFaceCulling.ZyFront;
+                block.FaceVisible &= ~BlockFaceVisible.ZyFront;
             if (x > 0 && Blocks[x - 1, y, z] is not null)
-                block.FaceCulling &= ~BlockFaceCulling.ZyBack;
+                block.FaceVisible &= ~BlockFaceVisible.ZyBack;
             if (z < SizeZ - 1 && Blocks[x, y, z + 1] is not null)
-                block.FaceCulling &= ~BlockFaceCulling.XyFront;
+                block.FaceVisible &= ~BlockFaceVisible.XyFront;
             if (z > 0 && Blocks[x, y, z - 1] is not null)
-                block.FaceCulling &= ~BlockFaceCulling.XyBack;
+                block.FaceVisible &= ~BlockFaceVisible.XyBack;
         }
         Console.WriteLine("Facecull time(ms): " + watch.Elapsed.TotalMilliseconds);
         watch.Reset();
