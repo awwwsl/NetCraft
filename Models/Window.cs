@@ -110,27 +110,13 @@ public class Window : GameWindow
     {
         base.OnUpdateFrame(e);
 
-        Console.WriteLine("Camera: " + _camera.Position);
-        Console.WriteLine("CameraFacing: " + _camera.Front);
-        try
-        {
-            var cap = (DebugCapability)_chunk.Blocks[(int)_camera.Position.X, (int)_camera.Position.Y, (int)_camera.Position.Z]?.Capabilities.FirstOrDefault(e => e is DebugCapability)!;
-            cap.Dump();
-        }
-        catch (IndexOutOfRangeException)
-        {
-            Console.WriteLine("Out of chunk");
-        }
-        catch (NullReferenceException)
-        {
-            Console.WriteLine("No Block");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex);
-        }
-        Console.WriteLine();
+        DumpDebugInfo();
 
+        UpdateUserAction(e);
+    }
+
+    private void UpdateUserAction(FrameEventArgs e)
+    {
         if (!IsFocused)
         {
             return;
@@ -187,6 +173,30 @@ public class Window : GameWindow
             _camera.Yaw += deltaX * sensitivity;
             _camera.Pitch -= deltaY * sensitivity;
         }
+    }
+
+    private void DumpDebugInfo()
+    {
+        Console.WriteLine("Camera: " + _camera.Position);
+        Console.WriteLine("CameraFacing: " + _camera.Front);
+        try
+        {
+            var cap = (DebugCapability)_chunk.Blocks[(int)_camera.Position.X, (int)_camera.Position.Y, (int)_camera.Position.Z]?.Capabilities.FirstOrDefault(e => e is DebugCapability)!;
+            cap.Dump();
+        }
+        catch (IndexOutOfRangeException)
+        {
+            Console.WriteLine("Out of chunk");
+        }
+        catch (NullReferenceException)
+        {
+            Console.WriteLine("No Block");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
+        Console.WriteLine();
     }
 
     protected override void OnMouseWheel(MouseWheelEventArgs e)
