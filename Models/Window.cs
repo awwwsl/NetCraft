@@ -92,6 +92,20 @@ public class Window : GameWindow
                 Specular = (0f, 0f, 0.4f),
             }
         };
+        _chunk.Blocks[5, 2, 9] = new BlockPointLight("blockLamp")
+        {
+            Location = (5, 2, 9),
+            PointLight = new()
+            {
+                Position = (5, 2, 9),
+                Constant = 1f,
+                Linear = 0.09f,
+                Quadratic = 0.032f,
+                Ambient = (1.0f, 1.0f, 1.0f),
+                Diffuse = (1f, 1f, 1f),
+                Specular = (0.5f, 0f, 0f),
+            }
+        };
 
         _chunk.Load();
 

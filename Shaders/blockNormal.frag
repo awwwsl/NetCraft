@@ -105,7 +105,7 @@ void main()
     //phase 1: Directional lighting
     //vec3 result = CalcDirLight(dirLight, norm, viewDir);
     //phase 2: Point lights
-    vec3 result = vec3(0f);
+    vec3 result = vec3(0.0);
     for(int i = 0; i < pLightNum; i++)
     {
       result += CalcPointLight(pLights[i], norm, FragPos, viewDir);
