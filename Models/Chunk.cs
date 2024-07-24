@@ -1,6 +1,7 @@
 using System.Collections;
 using NetCraft.Models.Enums;
 using NetCraft.Models.Lights;
+using NetCraft.Models.Structs;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
@@ -11,8 +12,6 @@ public class Chunk
     public WorldBlock?[,,] Blocks { get; set; } = new WorldBlock[SizeX, SizeY, SizeZ];
 
     public Vector2i Location { get; init; }
-
-    private PointLightRenderable[] _pLights = Array.Empty<PointLightRenderable>();
 
     private static Stopwatch _watch = new();
 
@@ -34,7 +33,11 @@ public class Chunk
         for (int y = 0; y < GenerateSizeY; y++)
         for (int z = 0; z < GenerateSizeZ; z++)
         {
-            Blocks[x, y, z] = new WorldBlock("container2") { Location = new(x + Location.X * SizeX, y, z + Location.Y * SizeZ) };
+            Blocks[x, y, z] = new WorldBlock("simpleVoxel")
+            {
+                Location = new(x + Location.X * SizeX, y, z + Location.Y * SizeZ),
+                Textures = new("container2"),
+            };
         }
         Console.WriteLine("Construct time(ms): " + watch.Elapsed.TotalMilliseconds);
         watch.Reset();
@@ -55,7 +58,7 @@ public class Chunk
                 continue;
             if (block.PointLight is not null)
             {
-                lights.Add(block.PointLight.Value);
+                lights.Add(block.PointLight);
                 Console.WriteLine($"Added light {block.Location}");
             }
             if (!loadedShader.Contains(block.Shader))
@@ -63,9 +66,12 @@ public class Chunk
                 loadedShader.Add(block.Shader);
             }
         }
-        _pLights = lights.Select(e => e.GetAligned()).ToArray();
-        Console.WriteLine($"Number of point lights: {_pLights.Length}");
-        Console.WriteLine("Size of PointLightRenderable: " + System.Runtime.InteropServices.Marshal.SizeOf(typeof(PointLightRenderable)));
+        // _pLights = lights.Select(e => e.GetAligned()).ToArray();
+        // Console.WriteLine($"Number of point lights: {_pLights.Length}");
+        Console.WriteLine(
+            "Size of PointLightRenderable: "
+                + System.Runtime.InteropServices.Marshal.SizeOf(typeof(PointLightRenderable))
+        );
 
         Console.WriteLine("Load time(ms): " + watch.Elapsed.TotalMilliseconds);
         watch.Restart();
@@ -95,11 +101,12 @@ public class Chunk
         watch.Reset();
     }
 
-    public PointLightRenderable[] GetPointLights()
-    {
-        return _pLights;
-    }
+    // public PointLightRenderable[] GetPointLights()
+    // {
+    //     return _pLights;
+    // }
 
+    [Obsolete]
     public IEnumerable<WorldBlock> GetBlocks()
     {
         for (int x = 0; x < SizeX; x++)
@@ -111,6 +118,14 @@ public class Chunk
             {
                 yield return block;
             }
+        }
+    }
+
+    public void RenderChunk(RenderContext context)
+    {
+        foreach (var block in Blocks)
+        {
+            block?.Render(context);
         }
     }
 }

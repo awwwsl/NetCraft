@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
@@ -7,78 +8,50 @@ namespace NetCraft.Models;
 public class Shader
 {
     public readonly int Handle;
-    private string _id;
-    private static readonly Dictionary<string, Shader> _cache = new();
-    private readonly Dictionary<string, int> _uniformLocations;
+    private string name;
+    private static readonly Dictionary<string, Shader> shaders = new();
+    private readonly Dictionary<string, int> uniformLocations;
 
-    public bool LightShader = false;
+    private static int ubo;
 
     public static Shader GetShaderFromId(string id)
     {
-        if (_cache.TryGetValue(id, out var early))
+        if (shaders.TryGetValue(id, out var early))
         {
             return early;
         }
         else
         {
-            Shader shader = new(id);
-            _cache.Add(id, shader);
-            return shader;
+            throw new InvalidOperationException("Shader not found.");
         }
     }
 
-    // This is how you create a simple shader.
-    // Shaders are written in GLSL, which is a language very similar to C in its semantics.
-    // The GLSL source is compiled *at runtime*, so it can optimize itself for the graphics card it's currently being used on.
-    // A commented example of GLSL can be found in shader.vert.
-    private Shader(string id)
+    private Shader(string fragmentShaderPath, string vertexShaderPath, string name)
     {
-        _id = id;
-        string vertPath = $"Shaders/{id}.vert";
-        string fragPath = $"Shaders/{id}.frag";
-        if (id == "blockLamp")
-            LightShader = true;
-        // There are several different types of shaders, but the only two you need for basic rendering are the vertex and fragment shaders.
-        // The vertex shader is responsible for moving around vertices, and uploading that data to the fragment shader.
-        //   The vertex shader won't be too important here, but they'll be more important later.
-        // The fragment shader is responsible for then converting the vertices to "fragments", which represent all the data OpenGL needs to draw a pixel.
-        //   The fragment shader is what we'll be using the most here.
+        this.name = name;
+        var vertSource = File.ReadAllText(vertexShaderPath);
+        var vertShader = GL.CreateShader(ShaderType.VertexShader);
 
-        // Load vertex shader and compile
-        var shaderSource = File.ReadAllText(vertPath);
+        CompileShader(vertShader, vertSource, name);
 
-        // GL.CreateShader will create an empty shader (obviously). The ShaderType enum denotes which type of shader will be created.
-        var vertexShader = GL.CreateShader(ShaderType.VertexShader);
+        var fragSource = File.ReadAllText(fragmentShaderPath);
+        var fragShader = GL.CreateShader(ShaderType.FragmentShader);
+        CompileShader(fragShader, fragSource, name);
 
-        // Now, bind the GLSL source code
-        GL.ShaderSource(vertexShader, shaderSource);
-
-        // And then compile
-        CompileShader(vertexShader, _id + ".vert");
-
-        // We do the same for the fragment shader.
-        shaderSource = File.ReadAllText(fragPath);
-        var fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
-        GL.ShaderSource(fragmentShader, shaderSource);
-        CompileShader(fragmentShader, _id + ".frag");
-
-        // These two shaders must then be merged into a shader program, which can then be used by OpenGL.
-        // To do this, create a program...
         Handle = GL.CreateProgram();
 
-        // Attach both shaders...
-        GL.AttachShader(Handle, vertexShader);
-        GL.AttachShader(Handle, fragmentShader);
+        GL.AttachShader(Handle, vertShader);
+        GL.AttachShader(Handle, fragShader);
 
         // And then link them together.
         LinkProgram(Handle);
 
         // When the shader program is linked, it no longer needs the individual shaders attached to it; the compiled code is copied into the shader program.
         // Detach them, and then delete them.
-        GL.DetachShader(Handle, vertexShader);
-        GL.DetachShader(Handle, fragmentShader);
-        GL.DeleteShader(fragmentShader);
-        GL.DeleteShader(vertexShader);
+        GL.DetachShader(Handle, vertShader);
+        GL.DetachShader(Handle, fragShader);
+        GL.DeleteShader(fragShader);
+        GL.DeleteShader(vertShader);
 
         // The shader is now ready to go, but first, we're going to cache all the shader uniform locations.
         // Querying this from the shader is very slow, so we do it once on initialization and reuse those values
@@ -88,7 +61,7 @@ public class Shader
         GL.GetProgram(Handle, GetProgramParameterName.ActiveUniforms, out var numberOfUniforms);
 
         // Next, allocate the dictionary to hold the locations.
-        _uniformLocations = new Dictionary<string, int>();
+        uniformLocations = new Dictionary<string, int>();
 
         // Loop over all the uniforms,
         for (var i = 0; i < numberOfUniforms; i++)
@@ -100,16 +73,15 @@ public class Shader
             var location = GL.GetUniformLocation(Handle, key);
 
             // and then add it to the dictionary.
-            _uniformLocations.Add(key, location);
+            uniformLocations.Add(key, location);
         }
     }
 
-    private static void CompileShader(int shader, string name)
+    private static void CompileShader(int shader, string source, string name)
     {
-        // Try to compile the shader
+        GL.ShaderSource(shader, source);
         GL.CompileShader(shader);
 
-        // Check for compilation errors
         GL.GetShader(shader, ShaderParameter.CompileStatus, out var code);
         if (code != (int)All.True)
         {
@@ -134,9 +106,14 @@ public class Shader
     }
 
     // A wrapper function that enables the shader program.
+    private static Shader? _lastUsed = null;
+
     public void Use()
     {
+        if (_lastUsed == this)
+            return;
         GL.UseProgram(Handle);
+        _lastUsed = this;
     }
 
     // The shader sources provided with this project use hardcoded layout(location)-s. If you want to do it dynamically,
@@ -163,10 +140,10 @@ public class Shader
     public void SetInt(string name, int data)
     {
         GL.UseProgram(Handle);
-        if (_uniformLocations.TryGetValue(name, out var location))
-            GL.Uniform1(_uniformLocations[name], data);
+        if (uniformLocations.TryGetValue(name, out var location))
+            GL.Uniform1(uniformLocations[name], data);
         else
-            throw new KeyNotFoundException($"Shader {_id} doesn't have prpoerty {name}.");
+            throw new KeyNotFoundException($"Shader {this.name} doesn't have prpoerty {name}.");
     }
 
     /// <summary>
@@ -177,10 +154,10 @@ public class Shader
     public void SetFloat(string name, float data)
     {
         GL.UseProgram(Handle);
-        if (_uniformLocations.TryGetValue(name, out var location))
-            GL.Uniform1(_uniformLocations[name], data);
+        if (uniformLocations.TryGetValue(name, out var location))
+            GL.Uniform1(uniformLocations[name], data);
         else
-            throw new KeyNotFoundException($"Shader {_id} doesn't have prpoerty {name}.");
+            throw new KeyNotFoundException($"Shader {this.name} doesn't have prpoerty {name}.");
     }
 
     /// <summary>
@@ -196,10 +173,10 @@ public class Shader
     public void SetMatrix4(string name, Matrix4 data)
     {
         GL.UseProgram(Handle);
-        if (_uniformLocations.TryGetValue(name, out var location))
-            GL.UniformMatrix4(_uniformLocations[name], true, ref data);
+        if (uniformLocations.TryGetValue(name, out var location))
+            GL.UniformMatrix4(uniformLocations[name], true, ref data);
         else
-            throw new KeyNotFoundException($"Shader {_id} doesn't have prpoerty {name}.");
+            throw new KeyNotFoundException($"Shader {this.name} doesn't have prpoerty {name}.");
     }
 
     /// <summary>
@@ -210,10 +187,10 @@ public class Shader
     public void SetVector3(string name, Vector3 data)
     {
         GL.UseProgram(Handle);
-        if (_uniformLocations.TryGetValue(name, out var location))
-            GL.Uniform3(_uniformLocations[name], data);
+        if (uniformLocations.TryGetValue(name, out var location))
+            GL.Uniform3(uniformLocations[name], data);
         else
-            throw new KeyNotFoundException($"Shader {_id} doesn't have prpoerty {name}.");
+            throw new KeyNotFoundException($"Shader {this.name} doesn't have prpoerty {name}.");
     }
 
     ///
@@ -225,9 +202,51 @@ public class Shader
     public void SetVector4(string name, Vector4 data)
     {
         GL.UseProgram(Handle);
-        if (_uniformLocations.TryGetValue(name, out var location))
-            GL.Uniform4(_uniformLocations[name], data);
+        if (uniformLocations.TryGetValue(name, out var location))
+            GL.Uniform4(uniformLocations[name], data);
         else
-            throw new KeyNotFoundException($"Shader {_id} doesn't have prpoerty {name}.");
+            throw new KeyNotFoundException($"Shader {this.name} doesn't have prpoerty {name}.");
+    }
+
+    private bool uboFirst = false;
+
+    public void SetTransformation(ref Transformation transformation)
+    {
+        GL.BindBuffer(BufferTarget.UniformBuffer, ubo);
+        GL.BindBufferBase(BufferRangeTarget.UniformBuffer, 0, ubo);
+        if (uboFirst)
+        {
+            GL.BufferData(
+                BufferTarget.UniformBuffer,
+                Marshal.SizeOf(typeof(Transformation)),
+                ref transformation,
+                BufferUsageHint.StaticDraw
+            );
+        }
+        else
+        {
+            GL.BufferSubData(
+                BufferTarget.UniformBuffer,
+                0,
+                Marshal.SizeOf(typeof(Transformation)),
+                ref transformation
+            );
+        }
+    }
+
+    public static void InitializeShader()
+    {
+        List<(string Frag, string Vert, string Name)> pairs =
+            new()
+            {
+                ("Shaders/blockLamp.frag", "Shaders/blockLamp.vert", "lightedSimpleVoxel"),
+                ("Shaders/blockNormal.frag", "Shaders/blockNormal.vert", "simpleVoxel"),
+            };
+
+        foreach (var pair in pairs)
+        {
+            var shader = new Shader(pair.Frag, pair.Vert, pair.Name);
+            shaders.Add(pair.Name, shader);
+        }
     }
 }

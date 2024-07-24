@@ -1,6 +1,7 @@
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using NetCraft.Models.Enums;
 using OpenTK.Graphics.OpenGL4;
 using StbImageSharp;
 using PixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
@@ -10,7 +11,14 @@ namespace NetCraft.Models;
 // A helper class, much like Shader, meant to simplify loading textures.
 public class Texture
 {
-    public readonly int Handle;
+    public required int Handle { get; init; }
+    public required TextureType Type { get; init; }
+
+    public static Texture NullDiffuseTexture => LoadDiffuseFromId("null");
+    public static Texture NullSpecularTexture => LoadSpecularFromId("null");
+
+    private Texture() { }
+
     private static readonly Dictionary<string, Texture> _cache = new();
 
     public static Texture LoadDiffuseFromId(string id)
@@ -21,17 +29,34 @@ public class Texture
         {
             return _cache[path];
         }
-        return LoadFromFile(path);
+        return LoadFromFile(path, TextureType.Diffuse) ?? NullDiffuseTexture;
     }
 
-    public static Texture LoadSpecularFromId(string id) => LoadDiffuseFromId(id + "_specular");
-
-    public static Texture LoadFromFile(string path)
+    public static Texture LoadSpecularFromId(string id)
     {
+        var path = $"Resources/{id}_specular.png";
+
         if (_cache.ContainsKey(path))
+        {
             return _cache[path];
-        if (!File.Exists(path))
-            return NullTexture.Instance;
+        }
+        return LoadFromFile(path, TextureType.Specular) ?? NullSpecularTexture;
+    }
+
+    public static void InitializeTexture()
+    {
+        LoadSpecularFromId("null");
+        LoadDiffuseFromId("null");
+    }
+
+    private static Texture? LoadFromFile(string path, TextureType type)
+    {
+        {
+            if (_cache.TryGetValue(path, out var value))
+                return value;
+            if (!File.Exists(path))
+                return null;
+        }
 
         // Generate handle
         int handle = GL.GenTexture();
@@ -62,7 +87,17 @@ public class Texture
             //   The format of the pixels, explained above. Since we loaded the pixels as RGBA earlier, we need to use PixelFormat.Rgba.
             //   Data type of the pixels.
             //   And finally, the actual pixels.
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, image.Width, image.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, image.Data);
+            GL.TexImage2D(
+                TextureTarget.Texture2D,
+                0,
+                PixelInternalFormat.Rgba,
+                image.Width,
+                image.Height,
+                0,
+                PixelFormat.Rgba,
+                PixelType.UnsignedByte,
+                image.Data
+            );
         }
 
         // Now that our texture is loaded, we can set a few settings to affect how the image appears on rendering.
@@ -72,13 +107,29 @@ public class Texture
         // You could also use (amongst other options) Nearest, which just grabs the nearest pixel, which makes the texture look pixelated if scaled too far.
         // NOTE: The default settings for both of these are LinearMipmap. If you leave these as default but don't generate mipmaps,
         // your image will fail to render at all (usually resulting in pure black instead).
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+        GL.TexParameter(
+            TextureTarget.Texture2D,
+            TextureParameterName.TextureMinFilter,
+            (int)TextureMinFilter.Linear
+        );
+        GL.TexParameter(
+            TextureTarget.Texture2D,
+            TextureParameterName.TextureMagFilter,
+            (int)TextureMagFilter.Linear
+        );
 
         // Now, set the wrapping mode. S is for the X axis, and T is for the Y axis.
         // We set this to Repeat so that textures will repeat when wrapped. Not demonstrated here since the texture coordinates exactly match
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+        GL.TexParameter(
+            TextureTarget.Texture2D,
+            TextureParameterName.TextureWrapS,
+            (int)TextureWrapMode.Repeat
+        );
+        GL.TexParameter(
+            TextureTarget.Texture2D,
+            TextureParameterName.TextureWrapT,
+            (int)TextureWrapMode.Repeat
+        );
 
         // Next, generate mipmaps.
         // Mipmaps are smaller copies of the texture, scaled down. Each mipmap level is half the size of the previous one
@@ -89,23 +140,22 @@ public class Texture
         // Here is an example of mips in action https://en.wikipedia.org/wiki/File:Mipmap_Aliasing_Comparison.png
         GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
 
-        Texture texutre = new(handle);
+        Texture texutre = new() { Type = type, Handle = handle };
         _cache.Add(path, texutre);
 
         return texutre;
-    }
-
-    public Texture(int glHandle)
-    {
-        Handle = glHandle;
     }
 
     // Activate texture
     // Multiple textures can be bound, if your shader needs more than just one.
     // If you want to do that, use GL.ActiveTexture to set which slot GL.BindTexture binds to.
     // The OpenGL standard requires that there be at least 16, but there can be more depending on your graphics card.
+    private static Texture? _lastUsed = null; // HACK: Optimization
+
     public void Use(TextureUnit unit)
     {
+        if (_lastUsed == this)
+            return;
         GL.ActiveTexture(unit);
         GL.BindTexture(TextureTarget.Texture2D, Handle);
     }
